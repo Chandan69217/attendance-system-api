@@ -6,7 +6,7 @@ from app.core.response import error_response,success_response
 from app.core.custom_exception import HttpsException
 from app.schemas.user_schema import Role
 from app.lib.utils import generate_dept_id
-from datetime import datetime
+from datetime import datetime,timezone
 from typing import Optional
 from app.core.security import verify_token
 from collections import defaultdict
@@ -24,7 +24,7 @@ def add_department(
     current_user: dict = Depends(verify_token)
 ):
 
-    # 🔹 Authorization Check
+
     if current_user.get("role") != Role.admin:
         return error_response(
             message="Only admin can create department"
@@ -32,8 +32,8 @@ def add_department(
 
     user_id = current_user.get("id")
     head_id = department.head_id.upper() if department.head_id else None
+    head_name = None
 
-    # 🔹 Validate Head (Only If Provided)
     if head_id:
         head_doc = db.collection("users").document(head_id).get()
 
@@ -46,24 +46,26 @@ def add_department(
             return error_response(
                 message="Only faculty can be a head of the department"
             )
+        head_name = head_data.get("name")
 
-    # 🔹 Generate Department ID
+
     dept_id = generate_dept_id()
 
     new_dept = {
         "id": dept_id,
         "name": department.name.strip(),
         "head_id": head_id,
+        "head_name":head_name,
         "student_count": 0,
         "faculty_count": 0,
         "created_by": user_id,
-        "created_at": datetime.utcnow()  # ✅ use UTC
+        "created_at": datetime.now(timezone.utc)
     }
 
-    # 🔹 Save to Firestore
+    
     db.collection("departments").document(dept_id).set(new_dept)
 
-    # 🔹 Prepare Response
+   
     response_data = {
         "id": dept_id,
         "name": new_dept["name"],
@@ -92,18 +94,15 @@ def get_department(id: Optional[str] = None, current_user: dict = Depends(verify
 
     for u in users_docs:
         data = u.to_dict()
-        data["id"] = u.id
         users.append(data)
 
-    user_map = {u["id"]: u for u in users}
 
     student_count = defaultdict(int)
     faculty_count = defaultdict(int)
 
     for u in users:
-        dept_id = u.get("department")
+        dept_id = u.get("dept_id")
         role = u.get("role")
-
         if role == "student":
             student_count[dept_id] += 1
         elif role == "faculty":
@@ -117,17 +116,10 @@ def get_department(id: Optional[str] = None, current_user: dict = Depends(verify
 
         dept = doc.to_dict()
         dept_id = dept.get("id")
-
         dept.update({
             "student_count": student_count.get(dept_id, 0),
             "faculty_count": faculty_count.get(dept_id, 0),
         })
-
-        head_id = dept.get("head_id")
-        if head_id and head_id in user_map:
-            dept.update({
-                "head_name": user_map[head_id].get("name")
-            })
 
         return success_response(
             message="Department found successfully",
@@ -140,18 +132,11 @@ def get_department(id: Optional[str] = None, current_user: dict = Depends(verify
 
     for doc in docs:
         dept = doc.to_dict()
-        dept_id = dept.get("id")
-
+        dept_id = dept.get('id')
         dept.update({
             "student_count": student_count.get(dept_id, 0),
             "faculty_count": faculty_count.get(dept_id, 0),
         })
-
-        head_id = dept.get("head_id")
-        if head_id and head_id in user_map:
-            dept.update({
-                "head_name": user_map[head_id].get("name")
-            })
 
         depts.append(dept)
 
@@ -173,7 +158,6 @@ def delete_department(
          
         department_ref = db.collection("departments").document(id)
 
-        # Get document snapshot
         dept_snapshot = department_ref.get()
 
         if not dept_snapshot.exists:
@@ -217,7 +201,10 @@ def update_department(
 
 
    
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(
+                exclude_unset=True,
+                exclude_none=True
+            )
 
         if not update_data:
             return error_response(

@@ -37,11 +37,21 @@ class RegisterSchema(BaseModel):
     name: str
     email: EmailStr
     role: Optional[Role] = Role.student
-    department: Optional[str] = None
-    class_name: Optional[str] = None  
+    dept_id: Optional[str] = None
+    class_id: Optional[str] = None  
     avatar: Optional[str] = None
-    phone: Optional[str] = None
+    phone:str
     status: Optional[UserStatus] = UserStatus.active
+
+class UserUpdateSchema(BaseModel):
+    name: Optional[str] = None,
+    email: Optional[str] = None,
+    role : Optional[Role] = None,
+    dept_id:Optional[str] = None,
+    class_id: Optional[str] = None,
+    avater: Optional[str] = None,
+    phone : Optional[str] = None,
+    status: Optional[UserStatus] = None
 
 
 class LoginSchema(BaseModel):

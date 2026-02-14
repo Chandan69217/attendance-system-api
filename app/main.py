@@ -6,6 +6,7 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.department import department_routes
 from app.routes.user import user_routes
+from app.routes.classes import classes_routes
 
 app = FastAPI(title="Attendance System API")
 
@@ -58,6 +59,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(auth_routes.router, prefix="/auth", tags=["Authentication"])
 app.include_router(department_routes.router,prefix="/dept",tags=["Department"])
 app.include_router(user_routes.router,prefix="/user",tags=["User"])
+app.include_router(classes_routes.router,prefix="/class",tags=["Classes"])
 
 if __name__ == "__main__":
     uvicorn.run(

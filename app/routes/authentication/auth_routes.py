@@ -28,11 +28,22 @@ def register(
     collection = db.collection("users")
 
    
-    if user_data.role in [Role.faculty, Role.student] and not user_data.department:
-        return error_response(message="Department is required")
+    if user_data.role in [Role.faculty, Role.student]:
+        if not user_data.dept_id:
+            return error_response(message="Department is required")
+        dept_snap = db.collection("departments").document(user_data.dept_id).get()
+        if not dept_snap.exists:
+            return error_response(message="Department not found")
+       
 
-    if user_data.role == Role.student and not user_data.class_name:
-        return error_response(message="Class is required")
+    if user_data.role == Role.student:
+        if not user_data.class_id:
+            return error_response(message="Class is required")
+        class_snap = db.collection("classes").document(user_data.class_id).get()
+        if not class_snap.exists:
+            return error_response(
+                message="class not found"
+            )
 
     if not phone_validate(user_data.phone):
         return error_response(message="Please enter a valid 10-digit mobile number.")
@@ -74,12 +85,12 @@ def register(
         "name": user_data.name.strip(),
         "email": email,
         "role": user_data.role.value,
-        "department": user_data.department,
-        "class_name": user_data.class_name,
+        "dept_id": user_data.dept_id,
+        "class_id": user_data.class_id,
         "avatar": user_data.avatar,
         "phone": phone,
         "password": hashed_password,
-        "join_date": datetime.now(),
+        "join_date": datetime.now(timezone.utc),
         "status": user_data.status.value
     }
 
@@ -125,7 +136,11 @@ def login(login_data: LoginSchema):
     user_doc = query[0]
     user_dict = user_doc.to_dict()
 
-
+    if user_dict.get("status") == UserStatus.suspended:
+        return error_response(
+            message="your account is suspended"
+        )
+    
     if login_data.role != user_dict.get("role"):
         return error_response(
             message="Selected role does not match the registered account role."
@@ -318,7 +333,7 @@ def change_password(
   
     user_doc.reference.update({
         "password": hashed_password,
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.now(timezone.utc)
     })
 
 

@@ -52,6 +52,26 @@ def generate_dept_id():
     transaction = db.transaction()
     return update_counter(transaction)
 
+
+def generate_class_id():
+
+    counter_ref = db.collection("counters").document("classes")
+
+    @firestore.transactional
+    def update_counter(transaction):
+        snapshot = counter_ref.get(transaction=transaction)
+
+        if snapshot.exists:
+            count = snapshot.get("count") + 1
+        else:
+            count = 1
+
+        transaction.set(counter_ref, {"count": count})
+        return f"{"C"}{str(count).zfill(3)}"
+
+    transaction = db.transaction()
+    return update_counter(transaction)
+
 def generate_random_password(length: int = 8):
     characters = string.ascii_letters + string.digits
     return ''.join(secrets.choice(characters) for _ in range(length))
