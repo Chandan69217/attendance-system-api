@@ -46,6 +46,7 @@ def get_user_by_id(
         user.pop("password", None)
         users.append(user)
 
+    users.reverse()
     return success_response(
         message="All users fetched successfully",
         data=users
@@ -105,6 +106,7 @@ def get_users(
 
         users = [enrich_user(doc) for doc in role_query]
 
+        users.reverse()
         return success_response(
             message="Search results",
             data=users
@@ -113,7 +115,7 @@ def get_users(
 
     docs = users_collection.stream()
     users = [enrich_user(doc) for doc in docs]
-
+    users.reverse()
     return success_response(
         message="Users fetched successfully",
         data=users

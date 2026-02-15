@@ -117,7 +117,7 @@ def get_classes(
             })
 
             classes.append(cls_dict)
-
+        classes.reverse()
         return success_response(
             message="Classes fetched successfully",
             data=classes

@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.department import department_routes
 from app.routes.user import user_routes
 from app.routes.classes import classes_routes
+from app.routes.settings import settings_routes
+from app.routes.calendar import accedmic_calendar_routes
+from app.routes.session import session_routes
 
 app = FastAPI(title="Attendance System API")
 
@@ -60,6 +63,9 @@ app.include_router(auth_routes.router, prefix="/auth", tags=["Authentication"])
 app.include_router(department_routes.router,prefix="/dept",tags=["Department"])
 app.include_router(user_routes.router,prefix="/user",tags=["User"])
 app.include_router(classes_routes.router,prefix="/class",tags=["Classes"])
+app.include_router(settings_routes.router,prefix="/settings",tags=["Settings"])
+app.include_router(accedmic_calendar_routes.router,prefix="/academic-calendar",tags=["Academy Calandar"])
+app.include_router(session_routes.router,prefix="/sessions", tags=["Sessions"])
 
 if __name__ == "__main__":
     uvicorn.run(

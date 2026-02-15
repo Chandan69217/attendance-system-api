@@ -41,6 +41,7 @@ class RegisterSchema(BaseModel):
     class_id: Optional[str] = None  
     avatar: Optional[str] = None
     phone:str
+    session_id:Optional[str]
     status: Optional[UserStatus] = UserStatus.active
 
 class UserUpdateSchema(BaseModel):

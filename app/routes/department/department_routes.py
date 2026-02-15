@@ -139,7 +139,7 @@ def get_department(id: Optional[str] = None, current_user: dict = Depends(verify
         })
 
         depts.append(dept)
-
+    depts.reverse()
     return success_response(
         message="All departments fetched successfully",
         data=depts

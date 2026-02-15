@@ -27,6 +27,14 @@ def register(
 
     collection = db.collection("users")
 
+    if user_data.role in [Role.faculty, Role.student]:
+        if not user_data.session_id:
+            return error_response(
+                message="Session is required"
+            )
+        sess_snap = db.collection("sessions").document(user_data.session_id).get()
+        if not sess_snap.exists:
+            return error_response(message="Session not found")
    
     if user_data.role in [Role.faculty, Role.student]:
         if not user_data.dept_id:
@@ -90,6 +98,7 @@ def register(
         "avatar": user_data.avatar,
         "phone": phone,
         "password": hashed_password,
+        "session_id":user_data.session_id,
         "join_date": datetime.now(timezone.utc),
         "status": user_data.status.value
     }
