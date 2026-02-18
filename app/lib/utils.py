@@ -47,7 +47,7 @@ def generate_dept_id():
             count = 1
 
         transaction.set(counter_ref, {"count": count})
-        return f"{"D"}{str(count).zfill(3)}"
+        return f"D{str(count).zfill(3)}"
 
     transaction = db.transaction()
     return update_counter(transaction)
@@ -67,7 +67,7 @@ def generate_session_id():
             count = 1
 
         transaction.set(counter_ref, {"count": count})
-        return f"{"SE"}{str(count).zfill(3)}"
+        return f"SE{str(count).zfill(3)}"
 
     transaction = db.transaction()
     return update_counter(transaction)
@@ -87,10 +87,52 @@ def generate_class_id():
             count = 1
 
         transaction.set(counter_ref, {"count": count})
-        return f"{"C"}{str(count).zfill(3)}"
+        return f"C{str(count).zfill(3)}"
 
     transaction = db.transaction()
     return update_counter(transaction)
+
+
+def generate_faculty_attendace_id():
+
+    counter_ref = db.collection("counters").document("faculty_attendance")
+
+    @firestore.transactional
+    def update_counter(transaction):
+        snapshot = counter_ref.get(transaction=transaction)
+
+        if snapshot.exists:
+            count = snapshot.get("count") + 1
+        else:
+            count = 1
+
+        transaction.set(counter_ref, {"count": count})
+        return f"FA{str(count).zfill(3)}"
+
+    transaction = db.transaction()
+    return update_counter(transaction)
+
+
+def generate_student_attendance_id():
+
+    counter_ref = db.collection("counters").document("student_attendance")
+
+    @firestore.transactional
+    def update_counter(transaction):
+        snapshot = counter_ref.get(transaction=transaction)
+
+        if snapshot.exists:
+            count = snapshot.get("count") + 1
+        else:
+            count = 1
+
+        transaction.set(counter_ref, {"count": count})
+        return f"SA{str(count).zfill(3)}"
+
+    transaction = db.transaction()
+    return update_counter(transaction)
+
+
 
 def generate_random_password(length: int = 8):
     characters = string.ascii_letters + string.digits

@@ -86,8 +86,8 @@ def register(
     user_id = generate_user_id(user_data.role.value)
     plain_password = generate_random_password()
     hashed_password = hash_password(plain_password)
+ 
 
-  
     user_dict = {
         "id": user_id,
         "name": user_data.name.strip(),
@@ -99,7 +99,7 @@ def register(
         "phone": phone,
         "password": hashed_password,
         "session_id":user_data.session_id,
-        "join_date": datetime.now(timezone.utc),
+        "join_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "status": user_data.status.value
     }
 

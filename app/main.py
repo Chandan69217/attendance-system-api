@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from fastapi import Request, HTTPException,FastAPI
+from fastapi import Request, HTTPException,FastAPI,WebSocket
 from fastapi.exceptions import RequestValidationError
 from app.routes.authentication import auth_routes
 import uvicorn
@@ -10,6 +10,8 @@ from app.routes.classes import classes_routes
 from app.routes.settings import settings_routes
 from app.routes.calendar import accedmic_calendar_routes
 from app.routes.session import session_routes
+from app.web_sockets.attendance_socket import router as attendance_router
+from app.web_sockets.face_recognitation_socket import router as face_recognition
 
 app = FastAPI(title="Attendance System API")
 
@@ -66,6 +68,10 @@ app.include_router(classes_routes.router,prefix="/class",tags=["Classes"])
 app.include_router(settings_routes.router,prefix="/settings",tags=["Settings"])
 app.include_router(accedmic_calendar_routes.router,prefix="/academic-calendar",tags=["Academy Calandar"])
 app.include_router(session_routes.router,prefix="/sessions", tags=["Sessions"])
+app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
+app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
+
+
 
 if __name__ == "__main__":
     uvicorn.run(
@@ -75,3 +81,8 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
+
+
+
+
+

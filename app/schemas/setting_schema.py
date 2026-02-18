@@ -19,6 +19,7 @@ class CreateSettingSchema(BaseModel):
     holidays: List[str] = []
     latitude: float = 0.0
     longitude: float = 0.0
+    check_in: str = "10:00 AM"
 
 
 
@@ -40,6 +41,7 @@ class UpdateSettingSchema(BaseModel):
     holidays: Optional[List[str]] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    check_in: str = "10:00 AM"
 
 
 
@@ -77,3 +79,4 @@ class SettingKey(str, Enum):
 
     latitude = "latitude"
     longitude = "longitude"
+    check_in = "check_in"

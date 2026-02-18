@@ -71,7 +71,7 @@ def saveSettings(
 
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get("", status_code=status.HTTP_200_OK)
 def getSettings(current_user: dict = Depends(verify_token)):
 
     user_role = current_user.get("role")

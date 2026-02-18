@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional,List
 from enum import Enum
 from datetime import datetime
 
@@ -29,6 +29,7 @@ class User(BaseModel):
     phone: Optional[str] = None
     password: str
     join_date: Optional[datetime] = None
+    face_id: Optional[List[float]] = None
     status: Optional[UserStatus] = UserStatus.active
 
 
@@ -52,6 +53,7 @@ class UserUpdateSchema(BaseModel):
     class_id: Optional[str] = None,
     avater: Optional[str] = None,
     phone : Optional[str] = None,
+    face_id: Optional[List[float]] = None
     status: Optional[UserStatus] = None
 
 
