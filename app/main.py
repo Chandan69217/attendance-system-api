@@ -12,7 +12,7 @@ from app.routes.calendar import accedmic_calendar_routes
 from app.routes.session import session_routes
 from app.web_sockets.attendance_socket import router as attendance_router
 from app.web_sockets.face_recognitation_socket import router as face_recognition
-
+from app.routes.subject import subject_routes
 app = FastAPI(title="Attendance System API")
 
 
@@ -68,6 +68,7 @@ app.include_router(classes_routes.router,prefix="/class",tags=["Classes"])
 app.include_router(settings_routes.router,prefix="/settings",tags=["Settings"])
 app.include_router(accedmic_calendar_routes.router,prefix="/academic-calendar",tags=["Academy Calandar"])
 app.include_router(session_routes.router,prefix="/sessions", tags=["Sessions"])
+app.include_router(subject_routes.router,prefix="/subjects", tags=["Subject"])
 app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
 app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
 

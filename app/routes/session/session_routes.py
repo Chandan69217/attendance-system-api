@@ -49,7 +49,7 @@ def create_session(
     payload: CreateSessionSchema,
     current_user: dict = Depends(verify_token)
 ):
-    print(payload)
+
     user_role = current_user.get('role')
     if user_role != Role.admin:
         return error_response(

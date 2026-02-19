@@ -25,9 +25,10 @@ def register(
     background_tasks: BackgroundTasks
 ):
 
+    print(user_data)
     collection = db.collection("users")
 
-    if user_data.role in [Role.faculty, Role.student]:
+    if user_data.role in [Role.student]:
         if not user_data.session_id:
             return error_response(
                 message="Session is required"
@@ -35,6 +36,14 @@ def register(
         sess_snap = db.collection("sessions").document(user_data.session_id).get()
         if not sess_snap.exists:
             return error_response(message="Session not found")
+        
+        if not user_data.class_id:
+            return error_response(message="Class is required")
+        class_snap = db.collection("classes").document(user_data.class_id).get()
+        if not class_snap.exists:
+            return error_response(
+                message="class not found"
+            )
    
     if user_data.role in [Role.faculty, Role.student]:
         if not user_data.dept_id:
@@ -43,15 +52,7 @@ def register(
         if not dept_snap.exists:
             return error_response(message="Department not found")
        
-
-    if user_data.role == Role.student:
-        if not user_data.class_id:
-            return error_response(message="Class is required")
-        class_snap = db.collection("classes").document(user_data.class_id).get()
-        if not class_snap.exists:
-            return error_response(
-                message="class not found"
-            )
+       
 
     if not phone_validate(user_data.phone):
         return error_response(message="Please enter a valid 10-digit mobile number.")
@@ -99,6 +100,7 @@ def register(
         "phone": phone,
         "password": hashed_password,
         "session_id":user_data.session_id,
+        "subject_id" : user_data.subject_id,
         "join_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "status": user_data.status.value
     }

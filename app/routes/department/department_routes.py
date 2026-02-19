@@ -84,38 +84,42 @@ def add_department(
 
      
 @router.get("/get-dept", status_code=status.HTTP_200_OK)
-def get_department(id: Optional[str] = None, current_user: dict = Depends(verify_token)):
+def get_department(
+    id: Optional[str] = None,
+    current_user: dict = Depends(verify_token)
+):
 
     dept_collection = db.collection("departments")
 
+   
     users_docs = db.collection("users").stream()
-
-    users = []
-
-    for u in users_docs:
-        data = u.to_dict()
-        users.append(data)
-
 
     student_count = defaultdict(int)
     faculty_count = defaultdict(int)
 
-    for u in users:
-        dept_id = u.get("dept_id")
-        role = u.get("role")
-        if role == "student":
+    for doc in users_docs:
+        user = doc.to_dict()
+        dept_id = user.get("dept_id")
+        role = user.get("role")
+
+        if not dept_id:
+            continue
+
+        if role == Role.student:
             student_count[dept_id] += 1
-        elif role == "faculty":
+        elif role == Role.faculty:
             faculty_count[dept_id] += 1
 
+
     if id:
-        doc = dept_collection.document(id.upper()).get()
+        doc = dept_collection.document(id).get()
 
         if not doc.exists:
             return error_response(message="Department not found")
 
         dept = doc.to_dict()
         dept_id = dept.get("id")
+
         dept.update({
             "student_count": student_count.get(dept_id, 0),
             "faculty_count": faculty_count.get(dept_id, 0),
@@ -126,20 +130,23 @@ def get_department(id: Optional[str] = None, current_user: dict = Depends(verify
             data=[dept]
         )
 
-
+ 
     docs = dept_collection.stream()
     depts = []
 
     for doc in docs:
         dept = doc.to_dict()
-        dept_id = dept.get('id')
+        dept_id = dept.get("id")
+
         dept.update({
             "student_count": student_count.get(dept_id, 0),
             "faculty_count": faculty_count.get(dept_id, 0),
         })
 
         depts.append(dept)
+
     depts.reverse()
+
     return success_response(
         message="All departments fetched successfully",
         data=depts

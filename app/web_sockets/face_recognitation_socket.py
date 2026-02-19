@@ -32,6 +32,8 @@ async def face_recognition_socket(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
 
+            if pending_match and pending_encoding:
+                continue
                 # handle confirmation 
             if "confirm" in data:
 
@@ -161,8 +163,8 @@ async def face_recognition_socket(websocket: WebSocket):
                     "role": matched_user.get("role"),
                     "status": matched_user.get("status"),
                     "phone": matched_user.get("phone"),
-                    "join_date": matched_user.get("join_date").isoformat() if matched_user.get("join_date") else None,
-                    "updated_at": matched_user.get("updated_at").isoformat() if matched_user.get("updated_at") else None,
+                    "join_date": matched_user.get("join_date") if matched_user.get("join_date") else None,
+                   
             }
 
             # Store temporarily for confirm step

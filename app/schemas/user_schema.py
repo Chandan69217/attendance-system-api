@@ -39,8 +39,9 @@ class RegisterSchema(BaseModel):
     email: EmailStr
     role: Optional[Role] = Role.student
     dept_id: Optional[str] = None
-    class_id: Optional[str] = None  
+    subject_id:Optional[str] = None
     avatar: Optional[str] = None
+    class_id:Optional[str] = None
     phone:str
     session_id:Optional[str]
     status: Optional[UserStatus] = UserStatus.active
@@ -51,6 +52,7 @@ class UserUpdateSchema(BaseModel):
     role : Optional[Role] = None,
     dept_id:Optional[str] = None,
     class_id: Optional[str] = None,
+    subject_id:Optional[str] = None,
     avater: Optional[str] = None,
     phone : Optional[str] = None,
     face_id: Optional[List[float]] = None

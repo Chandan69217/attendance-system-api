@@ -190,6 +190,7 @@ def updateUser(
     current_user: dict = Depends(verify_token)
 ):
 
+
     update_data = data.model_dump(
         exclude_unset=True,
         exclude_none=True
