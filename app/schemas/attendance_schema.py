@@ -74,6 +74,7 @@ class AttendanceStatusSchema(str, Enum):
     on_leave = "on_leave"
 
 
+
 class AttendanceVerificationSchema(str, Enum):
     pending = "pending"
     approved = "approved"
@@ -86,6 +87,10 @@ class AttendanceMethodSchema(str, Enum):
     self_marked = "self_marked"
 
 
+
+class AttendanceVerificationRequest(BaseModel):
+    status: AttendanceVerificationSchema
+    
 class FacultyAttendanceSchema(BaseModel):
     id: str
     faculty_id: str

@@ -17,3 +17,4 @@ uvicorn[standard]
 
 dnspython==2.8.0 
 email-validator==2.3.0
+pytz
