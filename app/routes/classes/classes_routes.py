@@ -193,3 +193,47 @@ def delete(id:str,current_user:dict = Depends(verify_token)):
         message="Class deleted successfully",
         data=deleted_data
     )
+
+
+
+@router.get('/get-faculty-class',status_code= status.HTTP_200_OK)
+def getFacatulyClass(current_user:dict = Depends(verify_token)):
+
+    user_id = current_user.get('id')
+    user_name = current_user.get('name')
+    role = current_user.get('role')
+
+    if role != Role.faculty.value:
+        return error_response(message="You are not a faculty member")
+    
+    user_doc = db.collection('users').document(user_id).get()
+
+    if not user_doc.exists:
+        return error_response(message="User not found")
+    
+
+    user_data = user_doc.to_dict()
+
+    subject_id = user_data.get('subject_id')
+
+    subject_doc = db.collection('subjects').document(subject_id).get()
+
+    if not subject_doc.exists:
+        return error_response(message="Subject is not found")
+    
+    subject_data = subject_doc.to_dict()
+
+    class_id = subject_data.get('class_id')
+
+    class_doc = db.collection('classes').document(class_id).get()
+
+    if not class_doc.exists:
+        return error_response(message="Class not found")
+    
+    class_data = class_doc.to_dict()
+
+    return success_response(
+        message="class fetched successfully",
+        data=class_data
+    )
+    
