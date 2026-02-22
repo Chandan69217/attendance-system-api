@@ -14,6 +14,12 @@ from google.cloud.firestore_v1 import FieldFilter
 router = APIRouter()
 
 
+def format_to_12_hour(time_24: str) -> str:
+    try:
+        time_obj = datetime.strptime(time_24, "%H:%M")
+        return time_obj.strftime("%I:%M %p").lstrip("0")
+    except (ValueError, TypeError):
+        return time_24  
 
 
 @router.post("/create", status_code=status.HTTP_201_CREATED)
@@ -41,6 +47,7 @@ def create_subject(
             message="Department id is required"
         )
     
+    
     department_ref = db.collection("departments").document(payload.dept_id)
     department_doc = department_ref.get()
 
@@ -50,11 +57,33 @@ def create_subject(
     department_data = department_doc.to_dict()
 
 
+
+    if not payload.class_id:
+        return error_response(
+            message="Class id is required"
+        )
+    
+    
+    class_ref = db.collection("classes").document(payload.class_id)
+    class_doc = class_ref.get()
+
+    if not class_doc.exists:
+        return error_response(message="Class not found")
+
+    class_data = class_doc.to_dict()
+
+    
+
+
     subject_ref.set({
         "id": generate_id,
         "name": payload.name,
         "dept_id": payload.dept_id,
         "dept_name": department_data.get("name"),
+        "class_id" : payload.class_id,
+        "class_name" : class_data.get('name'),
+        "start_time" :payload.start_time,
+        "end_time" : payload.end_time,
         "faculty_count": 0,
         "created_at": datetime.now(timezone.utc)
     })  
@@ -173,7 +202,28 @@ def update_subject(
             return error_response(message="Department not found")
 
         update_data["dept_name"] = department.get("name")
+    else:
+        return error_response(message="Department id required")
+    
 
+
+    if "class_id" in update_data:
+
+        classes = db.collection("classes").document(update_data["class_id"]).get()
+
+        if not classes.exists:
+            return error_response(message="Class not found")
+
+        update_data["class_name"] = classes.get("name")
+    else:
+        return error_response(message="Class id required")
+    
+
+    if  not "start_time" in update_data:
+        return error_response(message="start time is required")
+    
+    if not "end_time" in update_data:
+        return error_response(message="end time is required")
 
     update_data["updated_at"] = datetime.now(timezone.utc)
 

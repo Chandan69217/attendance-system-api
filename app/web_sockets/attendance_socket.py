@@ -19,6 +19,8 @@ from app.lib.utils import (
 )
 from app.schemas.setting_schema import SettingKey
 import pytz
+from google.cloud.firestore_v1 import FieldFilter
+
 
 def get_time(value: str):
     return datetime.strptime(value, "%I:%M %p").time()
@@ -76,7 +78,7 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
             "%H:%M"
         ).time()
 
-        print(f" check in setting: {check_in_setting}")
+       
         # Get User
  
         user_doc = db.collection("users").document(user_id).get()
@@ -212,6 +214,31 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                 if existing.exists:
                     attendance_data = existing.to_dict()
 
+                    if not attendance_data.get('check_in'):
+                        allowed_time = ist.localize(datetime(
+                        now.year,
+                        now.month,
+                        now.day,
+                        check_in_setting.hour,
+                        check_in_setting.minute)) + timedelta(minutes=late_threshold)
+                        status = (
+                        AttendanceStatusSchema.late.value
+                        if now > allowed_time
+                        else AttendanceStatusSchema.present.value
+                        )
+                        attendance_ref.update({
+                        "check_in": format_time(datetime.now()),
+                        "remarks":remarks,
+                        "status":status,
+                        "updated_at": now
+                        })
+                        await websocket.send_json(
+                        success_response(
+                            message="Check-in marked",
+                            data={"isMarked": True}
+                        ))
+                        break
+
                     if attendance_data.get("check_out"):
                         await websocket.send_json(
                             success_response(message="Already checked out today")
@@ -275,18 +302,41 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
          
             else:
 
-                subject_id = data.get("subject_id")
+                lecture_id = data.get('lecture_id')
+                student_id = data.get('student_id')
+                student_name = data.get('student_name')
 
-                # Prevent duplicate attendance for same subject today
+                if not lecture_id:
+                    return error_response(message='lecture id is required')
+                
+
+                lecture_doc = db.collection('lectures').document(lecture_id).get()
+
+                if not lecture_doc.exists:
+                    return error_response(message="lecture not found")
+                
+                lecture_data = lecture_doc.to_dict()
+
+                lecture_status = lecture_data.ger("status")
+
+                if lecture_status == 'scheduled':
+                    return error_response(message="lecture is not started yet")
+                
+                if lecture_status == 'close':
+                    return error_response(message="lecture completed")
+                
+                subject_id = lecture_data.get("subject_id")
+
+               
                 existing_query = db.collection("student_attendances") \
-                    .where("student_id", "==", user_id) \
+                    .where(filter=FieldFilter("student_id", "==",student_id if subject_id != None else user_id)) \
                     .where("subject_id", "==", subject_id) \
                     .where("date", "==", today) \
                     .stream()
 
                 if any(existing_query):
                     await websocket.send_json(
-                        success_response(message= "Attendance already marked",data={
+                        success_response(message= f"Attendance already marked",data={
                             "isMarked" :True
                         })
                     )
@@ -294,15 +344,15 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
 
                 attendance_data = {
                     "id": generate_student_attendance_id(),
-                    "student_id": user_id,
-                    "student_name": user.get("name"),
+                    "student_id": student_id if student_id != None else user_id,
+                    "student_name": student_name if student_name != None else user.get("name"),
                     "date": today,
                     "subject_id": subject_id,
-                    "subject_name": data.get("subject_name"),
+                    "subject_name": lecture_data.get('subject_name'),
                     "status": AttendanceStatusSchema.present.value,
                     "marked_by_id": data.get("marked_by_id"),
                     "marked_by_name": data.get("marked_by_name"),
-                    "method": AttendanceMethodSchema.face_recognition.value,
+                    "method":AttendanceMethodSchema.self_marked.value if student_id == None else AttendanceMethodSchema.face_recognition.value,
                     "created_at": now
                 }
 
@@ -321,3 +371,6 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
 
     except Exception as e:
         print("Attendance Socket Error:", e)
+
+
+

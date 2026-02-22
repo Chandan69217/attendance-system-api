@@ -133,6 +133,26 @@ def generate_faculty_attendace_id():
     return update_counter(transaction)
 
 
+def generate_lecture_id():
+
+    counter_ref = db.collection("counters").document("lecture")
+
+    @firestore.transactional
+    def update_counter(transaction):
+        snapshot = counter_ref.get(transaction=transaction)
+
+        if snapshot.exists:
+            count = snapshot.get("count") + 1
+        else:
+            count = 1
+
+        transaction.set(counter_ref, {"count": count})
+        return f"LEC{str(count).zfill(3)}"
+
+    transaction = db.transaction()
+    return update_counter(transaction)
+
+
 def generate_student_attendance_id():
 
     counter_ref = db.collection("counters").document("student_attendance")

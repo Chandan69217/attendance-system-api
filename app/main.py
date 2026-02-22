@@ -14,15 +14,18 @@ from app.web_sockets.attendance_socket import router as attendance_router
 from app.web_sockets.face_recognitation_socket import router as face_recognition
 from app.routes.subject import subject_routes
 from app.routes.attendance.faculty_attendance import faculty_attendance
+from app.scheduler.start_scheduler import start_scheduler
+from contextlib import asynccontextmanager
+from app.routes.lectures import lectures_routes
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting scheduler...")
+    start_scheduler()
+    yield 
+    print("Shutting down...")
 
-
-
-
-
-
-app = FastAPI(title="Attendance System API")
-
+app = FastAPI(title="Attendance System API", lifespan=lifespan)
 
 
 app.add_middleware(
@@ -32,6 +35,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 @app.exception_handler(HTTPException)
@@ -53,7 +57,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         field = error["loc"][-1]
         message = error["msg"]
 
-        # Custom friendly messages
+  
         if field == "email":
             errors.append("Please enter a valid email address.")
         elif field == "phone":
@@ -65,7 +69,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=200,
         content={
             "success": False,
-            "message": errors[0]  # return first error only
+            "message": errors[0]  
         },
     )
 
@@ -80,6 +84,7 @@ app.include_router(subject_routes.router,prefix="/subjects", tags=["Subject"])
 app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
 app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
 app.include_router(faculty_attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
+app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
 
 
 
