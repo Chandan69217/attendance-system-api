@@ -73,6 +73,54 @@ def get_faculty_attendance(
         )
 
 
+@router.get("/student-attendance", status_code=status.HTTP_200_OK)
+def get_student_attendance(
+    student_id: Optional[str] = None,
+    date: Optional[str] = None,   
+    current_user: dict = Depends(verify_token)
+):
+
+    try:
+        collection = db.collection("student_attendances")
+        query = collection
+
+        if student_id:
+            query = query.where("student_id", "==", student_id)
+
+        if date:
+            query = query.where("date", "==", date)
+
+        docs = query.stream()
+
+        attendances = []
+
+        for doc in docs:
+            data = doc.to_dict()
+
+            if data.get("created_at"):
+                data["created_at"] = data["created_at"].isoformat()
+
+            if data.get("updated_at"):
+                data["updated_at"] = data["updated_at"].isoformat()
+
+            attendances.append(data)
+
+        attendances.sort(
+            key=lambda x: x.get("created_at", ""),
+            reverse=True
+        )
+
+        return success_response(
+            message="Faculty attendance fetched successfully",
+            data=attendances
+        )
+
+    except Exception as e:
+        return error_response(
+            message=f"Failed to fetch attendance: {str(e)}"
+        )
+
+
 
 
 @router.post("/verify/{id}",status_code=status.HTTP_200_OK)

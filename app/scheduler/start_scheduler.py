@@ -22,6 +22,6 @@ def start_scheduler():
         replace_existing=True,
         day_of_week="mon-sat",
         hour=0,
-        minute=2,
+        minute=2,   
     )
     scheduler.start()

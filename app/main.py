@@ -13,10 +13,13 @@ from app.routes.session import session_routes
 from app.web_sockets.attendance_socket import router as attendance_router
 from app.web_sockets.face_recognitation_socket import router as face_recognition
 from app.routes.subject import subject_routes
-from app.routes.attendance.faculty_attendance import faculty_attendance
+from app.routes.attendance import attendance
 from app.scheduler.start_scheduler import start_scheduler
 from contextlib import asynccontextmanager
 from app.routes.lectures import lectures_routes
+
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -83,7 +86,7 @@ app.include_router(session_routes.router,prefix="/sessions", tags=["Sessions"])
 app.include_router(subject_routes.router,prefix="/subjects", tags=["Subject"])
 app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
 app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
-app.include_router(faculty_attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
+app.include_router(attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
 app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
 
 

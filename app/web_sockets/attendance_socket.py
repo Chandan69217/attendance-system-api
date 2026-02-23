@@ -301,47 +301,56 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
             # STUDENT ATTENDANCE
          
             else:
-
+                print("step-1")
                 lecture_id = data.get('lecture_id')
                 student_id = data.get('student_id')
                 student_name = data.get('student_name')
 
                 if not lecture_id:
+                    print("step-2")
                     return error_response(message='lecture id is required')
                 
 
                 lecture_doc = db.collection('lectures').document(lecture_id).get()
 
                 if not lecture_doc.exists:
+                    print("step-3")
                     return error_response(message="lecture not found")
                 
                 lecture_data = lecture_doc.to_dict()
 
-                lecture_status = lecture_data.ger("status")
+                lecture_status = lecture_data.get("status")
 
                 if lecture_status == 'scheduled':
+                    print("step-4")
                     return error_response(message="lecture is not started yet")
                 
                 if lecture_status == 'close':
+                    print("step-5")
                     return error_response(message="lecture completed")
                 
                 subject_id = lecture_data.get("subject_id")
 
-               
-                existing_query = db.collection("student_attendances") \
-                    .where(filter=FieldFilter("student_id", "==",student_id if subject_id != None else user_id)) \
-                    .where("subject_id", "==", subject_id) \
-                    .where("date", "==", today) \
+                target_student_id = student_id if student_id else user_id
+
+                existing_query = (
+                    db.collection("student_attendances")
+                    .where(filter = FieldFilter("student_id", "==", target_student_id))
+                    .where(filter = FieldFilter("subject_id", "==", subject_id))
+                    .where(filter=FieldFilter("date", "==", today))
                     .stream()
+                )
 
                 if any(existing_query):
+                    print("step-6")
                     await websocket.send_json(
-                        success_response(message= f"Attendance already marked",data={
-                            "isMarked" :True
-                        })
+                        error_response(
+                            message="Attendance already marked",
+                        )
                     )
                     continue
 
+                print("step-7")
                 attendance_data = {
                     "id": generate_student_attendance_id(),
                     "student_id": student_id if student_id != None else user_id,
@@ -356,10 +365,10 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                     "created_at": now
                 }
 
-                db.collection("student_attendances") \
-                    .document(attendance_data["id"]) \
+                db.collection("student_attendances")\
+                    .document(attendance_data["id"])\
                     .set(attendance_data)
-
+                print("step-8")
                 await websocket.send_json(
                     success_response(message="Attendance Marked Successfully",data={
                         "isMarked" : True
