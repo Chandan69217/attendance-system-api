@@ -25,8 +25,10 @@ def register(
     background_tasks: BackgroundTasks
 ):
 
-    print(user_data)
+   
     collection = db.collection("users")
+    department = ''
+    class_name = ''
 
     if user_data.role in [Role.student]:
         if not user_data.session_id:
@@ -44,6 +46,9 @@ def register(
             return error_response(
                 message="class not found"
             )
+        else:
+            class_dict = class_snap.to_dict()
+            class_name = class_dict.get('name')
    
     if user_data.role in [Role.faculty, Role.student]:
         if not user_data.dept_id:
@@ -51,6 +56,9 @@ def register(
         dept_snap = db.collection("departments").document(user_data.dept_id).get()
         if not dept_snap.exists:
             return error_response(message="Department not found")
+        else: 
+            dept_dict = dept_snap.to_dict()
+            department=dept_dict.get('name')
        
        
 
@@ -95,7 +103,9 @@ def register(
         "email": email,
         "role": user_data.role.value,
         "dept_id": user_data.dept_id,
+        "department":department,
         "class_id": user_data.class_id,
+        "class_name":class_name,
         "avatar": user_data.avatar,
         "phone": phone,
         "password": hashed_password,
