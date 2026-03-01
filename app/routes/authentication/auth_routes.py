@@ -222,7 +222,7 @@ def send_otp(
     existing_otp = otp_ref.get()
     if existing_otp.exists:
         data = existing_otp.to_dict()
-        if data.get("expires_at") and data["expires_at"] > datetime.utcnow():
+        if data.get("expires_at") and data["expires_at"] > datetime.now(timezone.utc):
             return error_response(message="Please wait before requesting another OTP")
 
 

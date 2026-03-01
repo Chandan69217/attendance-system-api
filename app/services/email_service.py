@@ -1,24 +1,39 @@
-import smtplib
-from email.message import EmailMessage
+# import smtplib
+# from email.message import EmailMessage
+# import os
+
+
+    
+# def send_email(to_email: str, message:str):
+#     EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+#     EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+
+#     msg = EmailMessage()
+#     msg["Subject"] = "Your Attendance System Login Credentials"
+#     msg["From"] = EMAIL_ADDRESS
+#     msg["To"] = to_email
+
+#     msg.set_content(message)
+
+#     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+#         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+#         smtp.send_message(msg)
+
+
+import resend
 import os
 
-def send_email(to_email: str, message:str):
-    EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
-    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+def send_email(to_email: str, message: str):
+    resend.api_key = os.getenv("RESEND_API_KEY")
 
-    msg = EmailMessage()
-    msg["Subject"] = "Your Attendance System Login Credentials"
-    msg["From"] = EMAIL_ADDRESS
-    msg["To"] = to_email
+    response = resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": to_email,
+        "subject": "Your Attendance System Login Credentials",
+        "text": message,
+    })
 
-    msg.set_content(message)
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        smtp.send_message(msg)
-
-
-
+    print(response)
 
 def get_account_create_confirmation(email:str,password:str,user_name: str) -> str:
     return f"""
