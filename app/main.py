@@ -2,7 +2,6 @@ from fastapi.responses import JSONResponse
 from fastapi import Request, HTTPException,FastAPI,WebSocket
 from fastapi.exceptions import RequestValidationError
 from app.routes.authentication import auth_routes
-import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.department import department_routes
 from app.routes.user import user_routes
@@ -12,6 +11,7 @@ from app.routes.calendar import accedmic_calendar_routes
 from app.routes.session import session_routes
 from app.web_sockets.attendance_socket import router as attendance_router
 from app.web_sockets.face_recognitation_socket import router as face_recognition
+from app.web_sockets.student_face_attendance_socket import router as student_face_attendance
 from app.routes.subject import subject_routes
 from app.routes.attendance import attendance
 from app.scheduler.start_scheduler import start_scheduler
@@ -86,6 +86,7 @@ app.include_router(session_routes.router,prefix="/sessions", tags=["Sessions"])
 app.include_router(subject_routes.router,prefix="/subjects", tags=["Subject"])
 app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
 app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
+app.include_router(student_face_attendance,prefix="/ws/student",tags=["Student Face Attendance"])
 app.include_router(attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
 app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
 
