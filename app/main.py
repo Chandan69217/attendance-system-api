@@ -17,7 +17,7 @@ from app.routes.attendance import attendance
 from app.scheduler.start_scheduler import start_scheduler
 from contextlib import asynccontextmanager
 from app.routes.lectures import lectures_routes
-
+from app.routes.statistics.dashboard import dashboard_stats_routes
 
 
 
@@ -89,7 +89,7 @@ app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"]
 app.include_router(student_face_attendance,prefix="/ws/student",tags=["Student Face Attendance"])
 app.include_router(attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
 app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
-
+app.include_router(dashboard_stats_routes.router,prefix="/stats",tags=["Admin Dashboard"])
 
 
 

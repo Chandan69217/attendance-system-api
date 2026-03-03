@@ -25,21 +25,23 @@ def create(data:ClassSchema,currect_user:dict=Depends(verify_token)):
         )
     
     teacher_id = data.class_teacher_id
-
-    if not teacher_id:
-        return error_response(message="Class Teacher is required")
+    class_teacher =""
     
-    head_doc = db.collection("users").document(teacher_id).get()
-
-    if not head_doc.exists:
-        return error_response(
-            message= "Faculty does not exists"
-        )
-    if head_doc.to_dict().get("role") != Role.faculty:
-        return error_response(
-            message="Only faculty is a class teacher."
-        )
+    if  teacher_id:
+        # return error_response(message="Class Teacher is required")
     
+        head_doc = db.collection("users").document(teacher_id).get()
+
+        if not head_doc.exists:
+            return error_response(
+                message= "Faculty does not exists"
+            )
+        if head_doc.to_dict().get("role") != Role.faculty:
+            return error_response(
+                message="Only faculty is a class teacher."
+            )
+        class_teacher = head_doc.to_dict().get("name")
+
     dept_doc = db.collection("departments").document(data.dept_id).get()
 
     if not dept_doc.exists:
@@ -47,7 +49,7 @@ def create(data:ClassSchema,currect_user:dict=Depends(verify_token)):
             message="Department does not exists"
         )
     
-    class_teacher = head_doc.to_dict().get("name")
+    
     department = dept_doc.to_dict().get("name")
 
     id = generate_class_id()
