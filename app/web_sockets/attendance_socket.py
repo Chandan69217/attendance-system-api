@@ -5,6 +5,7 @@ import cv2
 import base64
 from geopy.distance import geodesic
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from app.firebase.firebase_init import db
 from app.schemas.attendance_schema import (
     AttendanceStatusSchema,
@@ -100,12 +101,11 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
         is_faculty = role == Role.faculty.value
 
        
-        # 🔄 Continuous Listening Loop
+
       
         while True:
 
-            ist = pytz.timezone("Asia/Kolkata")
-            now = datetime.now(ist)
+            now = datetime.now(ZoneInfo("Asia/Kolkata"))
 
             data = await websocket.receive_json()
 
@@ -184,6 +184,7 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
          
             # Geofence Check
             
+           
             inside, dist = check_geofence(
                 user_lat, user_lng,
                 latitude, longitude, radius
@@ -197,14 +198,14 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                 )
                 continue
 
-            today = now.date().isoformat()
+            today = datetime.now(ZoneInfo("Asia/Kolkata"))
 
-          
+            date = today.date().isoformat()
             # FACULTY ATTENDANCE
          
             if is_faculty:
 
-                doc_id = f"{user_id}_{today}"
+                doc_id = f"{user_id}_{date}"
                 attendance_ref = db.collection(
                     "faculty_attendances"
                 ).document(doc_id)
@@ -227,7 +228,7 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                         else AttendanceStatusSchema.present.value
                         )
                         attendance_ref.update({
-                        "check_in": format_time(datetime.now()),
+                        "check_in": format_time(today),
                         "remarks":remarks,
                         "status":status,
                         "updated_at": now
@@ -246,7 +247,7 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                         continue
 
                     attendance_ref.update({
-                        "check_out": format_time(datetime.now()),
+                        "check_out": format_time(today),
                         "updated_at": now
                     })
 
@@ -277,8 +278,8 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                         "id": doc_id,
                         "faculty_id": user_id,
                         "faculty_name": user.get("name"),
-                        "date": today,
-                        "check_in": format_time(datetime.now()),
+                        "date": date,
+                        "check_in": format_time(today),
                         "check_out": None,
                         "status": status,
                         "remarks":remarks,
@@ -301,20 +302,20 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
             # STUDENT ATTENDANCE
          
             else:
-                print("step-1")
+              
                 lecture_id = data.get('lecture_id')
                 student_id = data.get('student_id')
                 student_name = data.get('student_name')
 
                 if not lecture_id:
-                    print("step-2")
+                   
                     return error_response(message='lecture id is required')
                 
 
                 lecture_doc = db.collection('lectures').document(lecture_id).get()
 
                 if not lecture_doc.exists:
-                    print("step-3")
+                  
                     return error_response(message="lecture not found")
                 
                 lecture_data = lecture_doc.to_dict()
@@ -322,11 +323,11 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                 lecture_status = lecture_data.get("status")
 
                 if lecture_status == 'scheduled':
-                    print("step-4")
+                 
                     return error_response(message="lecture is not started yet")
                 
                 if lecture_status == 'close':
-                    print("step-5")
+                  
                     return error_response(message="lecture completed")
                 
                 subject_id = lecture_data.get("subject_id")
@@ -337,7 +338,7 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                     db.collection("student_attendances")
                     .where(filter = FieldFilter("student_id", "==", target_student_id))
                     .where(filter = FieldFilter("subject_id", "==", subject_id))
-                    .where(filter=FieldFilter("date", "==", today))
+                    .where(filter=FieldFilter("date", "==", date))
                     .stream()
                 )
 
@@ -350,12 +351,12 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                     )
                     continue
 
-                print("step-7")
+           
                 attendance_data = {
                     "id": generate_student_attendance_id(),
                     "student_id": student_id if student_id != None else user_id,
                     "student_name": student_name if student_name != None else user.get("name"),
-                    "date": today,
+                    "date": date,
                     "subject_id": subject_id,
                     "subject_name": lecture_data.get('subject_name'),
                     "status": AttendanceStatusSchema.present.value,
@@ -368,12 +369,14 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                 db.collection("student_attendances")\
                     .document(attendance_data["id"])\
                     .set(attendance_data)
-                print("step-8")
+        
+
                 await websocket.send_json(
-                    success_response(message="Attendance Marked Successfully",data={
-                        "isMarked" : True
-                    })
-                )
+                success_response(
+                    message="Attendance Marked Successfully",
+                    data={"isMarked": True}
+                ))
+                break
 
     except WebSocketDisconnect:
         print("Client disconnected")

@@ -12,13 +12,14 @@ from app.routes.session import session_routes
 from app.web_sockets.attendance_socket import router as attendance_router
 from app.web_sockets.face_recognitation_socket import router as face_recognition
 from app.web_sockets.student_face_attendance_socket import router as student_face_attendance
+from app.web_sockets.notifications_socket import router as notifications_router
 from app.routes.subject import subject_routes
 from app.routes.attendance import attendance
 from app.scheduler.start_scheduler import start_scheduler
 from contextlib import asynccontextmanager
 from app.routes.lectures import lectures_routes
 from app.routes.statistics.dashboard import dashboard_stats_routes
-
+from app.routes.notifications import notifications_routes
 
 
 @asynccontextmanager
@@ -87,9 +88,11 @@ app.include_router(subject_routes.router,prefix="/subjects", tags=["Subject"])
 app.include_router(attendance_router,prefix="/ws/attendance", tags=["Sockets"])
 app.include_router(face_recognition,prefix="/ws/users",tags=["Face Recognition"])
 app.include_router(student_face_attendance,prefix="/ws/student",tags=["Student Face Attendance"])
+app.include_router(notifications_router,prefix="/ws/notifications",tags=["Notifications Sockets"])
 app.include_router(attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
 app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
 app.include_router(dashboard_stats_routes.router,prefix="/stats",tags=["Admin Dashboard"])
+app.include_router(notifications_routes.router,prefix="/notifications",tags=["Notifications"])
 
 
 

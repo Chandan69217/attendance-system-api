@@ -111,7 +111,7 @@ def get_student_attendance(
         )
 
         return success_response(
-            message="Faculty attendance fetched successfully",
+            message="Student attendance fetched successfully",
             data=attendances
         )
 
