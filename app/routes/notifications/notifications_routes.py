@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends,BackgroundTasks,WebSocket
+from fastapi import APIRouter, Depends, BackgroundTasks, WebSocket
 from app.schemas.notifications_schema import NotificationSchema, UpdateNotificationSchema, NotificationTarget
 from app.firebase.firebase_init import db
 from app.core.security import verify_token
 from app.schemas.user_schema import Role
 from app.core.response import error_response, success_response
 from google.cloud.firestore_v1 import FieldFilter, Query
-from datetime import datetime,timezone
+from datetime import datetime, timezone
 from app.web_sockets.notifications_socket import manager
+from app.services.email_service import send_email_if_enabled
 import asyncio
 import uuid
 
@@ -126,15 +127,29 @@ def mark_as_read(id: str, current_user: dict = Depends(verify_token)):
         return error_response(message="Notification not found")
 
     notif_data = notification.to_dict()
+    role = current_user.get("role")
   
-    if notif_data.get("user_id") != user_id:
+    if notif_data.get("user_id") != user_id and role != Role.admin.value:
         return error_response(message="Unauthorized to read this notification")
 
-    notif_ref.update({
-        "read": True
-    })
+    batch_id = notif_data.get("batch_id")
 
-    return success_response(message="Notification marked as read",data=notif_data)
+    if role == Role.admin.value and batch_id:
+        # Admin is marking a batch notification as read.
+        # Mark all notifications in this batch as read so it persists across refreshes.
+        batch_notifications = (
+            db.collection("notifications")
+            .where(filter=FieldFilter("batch_id", "==", batch_id))
+            .stream()
+        )
+        batch = db.batch()
+        for doc in batch_notifications:
+            batch.update(doc.reference, {"read": True})
+        batch.commit()
+    else:
+        notif_ref.update({"read": True})
+
+    return success_response(message="Notification marked as read", data=notif_data)
 
 
 
@@ -189,18 +204,28 @@ def deleteNotification(id: str, current_user: dict = Depends(verify_token)):
 
 # This is for the email notifications
 
-def send_email_notification(email, message):
-    print("Sending email:", email, message)
+def send_email_notification(email: str, message: str):
+    """Send a notification email — respects the email_notifications setting."""
+    send_email_if_enabled(
+        to_email=email,
+        message=message,
+        subject="Attendance System Notification"
+    )
 
 
 @router.post("/notify-email")
-def notify(background_tasks: BackgroundTasks):
-    background_tasks.add_task(
-        send_email_notification,
-        "user@mail.com",
-        "New Notification"
-    )
+def notify(
+    background_tasks: BackgroundTasks,
+    email: str,
+    message: str,
+    current_user: dict = Depends(verify_token)
+):
+    user_role = current_user.get("role")
+    if user_role != Role.admin.value:
+        return error_response(message="Only admin can send email notifications")
 
-    return {"message": "Email scheduled"}
+    background_tasks.add_task(send_email_notification, email, message)
+
+    return success_response(message="Email notification scheduled")
 
 

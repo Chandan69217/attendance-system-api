@@ -91,8 +91,16 @@ app.include_router(student_face_attendance,prefix="/ws/student",tags=["Student F
 app.include_router(notifications_router,prefix="/ws/notifications",tags=["Notifications Sockets"])
 app.include_router(attendance.router,prefix="/attendance",tags=["Faculty Attendance"])
 app.include_router(lectures_routes.router,prefix="/lecture",tags=["Lectures"])
+from app.routes.exams import exams_routes
+from app.routes.assignments import assignments_routes
+
 app.include_router(dashboard_stats_routes.router,prefix="/stats",tags=["Admin Dashboard"])
 app.include_router(notifications_routes.router,prefix="/notifications",tags=["Notifications"])
+app.include_router(exams_routes.router,prefix="/exams",tags=["Exams"])
+app.include_router(assignments_routes.router,prefix="/assignments",tags=["Assignments"])
+
+from app.routes.statistics import daily_reports_routes
+app.include_router(daily_reports_routes.router, prefix="/reports", tags=["Daily Reports"])
 
 
 

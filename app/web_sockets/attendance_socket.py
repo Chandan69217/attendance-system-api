@@ -79,6 +79,10 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
             "%H:%M"
         ).time()
 
+        # ── Setting flags ──────────────────────────────────────────────────────
+        allow_self_attendance = settings.get("allow_student_self_attendance", True)
+        require_verification = settings.get("require_faculty_verification", True)
+
        
         # Get User
  
@@ -282,9 +286,14 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
                         "check_in": format_time(today),
                         "check_out": None,
                         "status": status,
-                        "remarks":remarks,
-                        "verification_status":
-                            AttendanceVerificationSchema.pending.value,
+                        "remarks": remarks,
+                        # If require_faculty_verification is OFF, auto-approve;
+                        # otherwise stay pending until admin verifies.
+                        "verification_status": (
+                            AttendanceVerificationSchema.pending.value
+                            if require_verification
+                            else AttendanceVerificationSchema.approved.value
+                        ),
                         "created_at": now,
                         "updated_at": now
                     }
@@ -300,12 +309,22 @@ async def attendance_socket(websocket: WebSocket, user_id: str):
 
         
             # STUDENT ATTENDANCE
-         
+
             else:
-              
                 lecture_id = data.get('lecture_id')
                 student_id = data.get('student_id')
                 student_name = data.get('student_name')
+
+                # ── Check: self-attendance allowed? ────────────────────────────
+                is_self_mark = student_id is None
+                if is_self_mark and not allow_self_attendance:
+                    await websocket.send_json(
+                        error_response(
+                            message="Self-attendance is currently disabled by admin. "
+                                    "Please ask your faculty to mark your attendance."
+                        )
+                    )
+                    continue
 
                 if not lecture_id:
                    

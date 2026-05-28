@@ -41,7 +41,7 @@ class UpdateSettingSchema(BaseModel):
     holidays: Optional[List[str]] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    check_in: str = "10:00 AM"
+    check_in: Optional[str] = None
 
 
 

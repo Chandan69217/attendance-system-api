@@ -70,6 +70,7 @@ async def student_face_recognition_socket(websocket: WebSocket):
         settings = settings_doc.to_dict()
         confi_threshold = settings.get("confidence_threshold", 60)
         confidence_threshold = round(1 - confi_threshold / 100, 2)
+        allow_self_attendance = settings.get("allow_student_self_attendance", True)
 
   
         students = []
@@ -197,7 +198,20 @@ async def student_face_recognition_socket(websocket: WebSocket):
                 )
                 continue
 
-            # 🔹 Create attendance
+            # ── Determine who is marking: faculty (marked_by_id in data) vs self ───
+            marked_by_id = data.get("marked_by_id")
+            is_self_mark = not marked_by_id  # no marker = student self-scan
+
+            if is_self_mark and not allow_self_attendance:
+                await websocket.send_json(
+                    error_response(
+                        message="Self-attendance is currently disabled by admin. "
+                                "Please ask your faculty to mark your attendance."
+                    )
+                )
+                continue
+
+            # ── Create attendance ──────────────────────────────────────
             today = now.date().isoformat()
             attendance_data = {
                 "id": generate_student_attendance_id(),
@@ -207,9 +221,13 @@ async def student_face_recognition_socket(websocket: WebSocket):
                 "subject_id": subject_id,
                 "subject_name": lecture_data.get("subject_name"),
                 "status": AttendanceStatusSchema.present.value,
-                "marked_by_id": lecture_data.get("faculty_id"),
-                "marked_by_name": lecture_data.get("faculty_name"),
-                "method": AttendanceMethodSchema.face_recognition.value,
+                "marked_by_id": marked_by_id or matched_user["id"],
+                "marked_by_name": data.get("marked_by_name") or matched_user["name"],
+                "method": (
+                    AttendanceMethodSchema.self_marked.value
+                    if is_self_mark
+                    else AttendanceMethodSchema.face_recognition.value
+                ),
                 "created_at": now
             }
 

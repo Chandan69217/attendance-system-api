@@ -1,11 +1,12 @@
-from fastapi import APIRouter,Depends,status
-from app.core.response import error_response,success_response
+from fastapi import APIRouter, Depends, status, BackgroundTasks
+from app.core.response import error_response, success_response
 from app.core.security import verify_token
 from app.firebase.firebase_init import db
 from app.schemas.user_schema import Role
 from datetime import datetime
 from app.lib.utils import generate_lecture_id
 from google.cloud.firestore_v1 import FieldFilter
+from app.services.absent_notification_service import notify_absent_students
 import pytz
 from datetime import datetime
 
@@ -166,8 +167,11 @@ def get_today_lectures(
 
 
 @router.post("/end/{lecture_id}")
-def endLecture(lecture_id: str, current_user: dict = Depends(verify_token)):
-    
+def endLecture(
+    lecture_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(verify_token)
+):
     lecture_ref = db.collection("lectures").document(lecture_id)
 
     if not lecture_ref.get().exists:
@@ -177,6 +181,9 @@ def endLecture(lecture_id: str, current_user: dict = Depends(verify_token)):
         "status": "closed",
         "ended_at": datetime.now(pytz.timezone("Asia/Kolkata"))
     })
+
+    # Fire absent notifications in background — doesn't block the HTTP response
+    background_tasks.add_task(notify_absent_students, lecture_id)
 
     return success_response(message="Lecture Ended")
 

@@ -24,7 +24,8 @@ def generate_daily_lecture_schedule():
             users.append(u)
 
 
-    map_user = {u["subject_id"] : u for u in users}
+    # Only include faculty who actually have a subject_id assigned
+    map_user = {u["subject_id"]: u for u in users if u.get("subject_id")}
 
     for subject in subjects:
         subject_data = subject.to_dict()
@@ -35,8 +36,8 @@ def generate_daily_lecture_schedule():
 
         if not ref.get().exists:
             faculty = map_user.get(subject.id)
-            if(not faculty):
-                return
+            if not faculty:
+                continue  # no faculty assigned to this subject, skip it
             
             ref.set({
                 "id": lecture_id,

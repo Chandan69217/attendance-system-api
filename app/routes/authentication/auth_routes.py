@@ -5,7 +5,7 @@ from app.firebase.firebase_init import db
 from app.core.response import success_response, error_response
 from app.lib.utils import generate_user_id,generate_random_password
 from datetime import datetime,timedelta,timezone
-from app.services.email_service import send_email,get_password_change_confirmation,get_account_create_confirmation
+from app.services.email_service import send_email, get_password_change_confirmation, get_account_create_confirmation
 from app.core.custom_exception import HttpsException
 from app.lib.field_validation import phone_validate
 from app.schemas.user_schema import Role,UserStatus
@@ -124,7 +124,8 @@ def register(
         user_name=user_data.name
     )
 
-    background_tasks.add_task(send_email, email, message)
+    # Account creation email — always send (transactional/important)
+    background_tasks.add_task(send_email, email, message, "Your Attendance System Login Credentials")
 
    
     response_data = user_dict.copy()
@@ -361,12 +362,14 @@ def change_password(
     otp_ref.delete()
 
 
+    # Password change confirmation — always send (security-critical)
     background_tasks.add_task(
         send_email,
         email,
         get_password_change_confirmation(
             user_name=user_dict.get("name")
-        )
+        ),
+        "Password Changed Successfully"
     )
 
     return success_response(
